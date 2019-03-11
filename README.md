@@ -9,7 +9,10 @@ Often I need to run many small individual serial jobs. This can be conveniently 
  - optional: do not run command if a specified result file is present 
  
 The goal is to have a DB at the end will all serial jobs, the total exec time, the individual memory requirement
- 
+
+## Description
+The master process reads all commands from the database and distributes them to the other MPI threads. Using asynchronous communication the master process waits for any process to be finished and distributes the new task. Currently the MPI processes only return the time that the task needed to be executed.
+
 ## first version
 This is only the first version and is not really tested...
 
