@@ -1,0 +1,19 @@
+# this is a comment and is ignored
+# the columns are separated by ;
+# columns are fixed in order: command; resultfile; cmdtype; cmdexe; exetime; comment
+# only the first column is mandatory, for more info, see readme file
+sleep 1;hallo;1;1;3;hallo
+sleep 2;hallo;1;
+sleep 2
+sleep 2;hallo;2;1;4;bla
+sleep 2;blubb;2
+sleep 2
+sleep 2
+sleep 2
+sleep 2
+sleep 2
+sleep 2
+sleep 2
+sleep 2
+sleep 2
+
