@@ -2,7 +2,7 @@
 MPI parallel pipeline for small serial jobs
 
 ## Motivation
-Often I need to run many small individual serial jobs. This can be conveniently done in a large MPI parallel job with the help of e.g., GNU parallel. However, GNU parallel is missing some features that I like to add with this small set of python programs:
+Often I need to run many small individual serial jobs. This can be conveniently done in a large MPI parallel job with the help of e.g. GNU parallel. However, GNU parallel is missing some features that I like to add with this small set of python programs:
  - store commands including exec time (and memory reqirements) in database
  - mark completed jobs, such that restart does not run commands twice
  - use SQL-like database instead of a weird collection of ASCII files
