@@ -6,6 +6,8 @@ import sqlite3 as lite
 
 import argparse
 parser = argparse.ArgumentParser(description='Plotting script') 
+parser.add_argument('-dbtable', type=str, help="SQlite DB file", default=dbtable)
+parser.add_argument('-db',      type=str, help="SQlite DB file", default=database)
 parser.add_argument('files',      nargs='+',   help='time evol data file')
 parser.add_argument('-show_cmd',   action="store_true")
 args = parser.parse_args()
@@ -14,12 +16,12 @@ from DBspecs import *
 
 # try to connect to sqlite db
 try:
-    con = lite.connect(database)
+    con = lite.connect(args.db)
     cur = con.cursor()    
     cur.execute('SELECT SQLITE_VERSION()')
     data = cur.fetchone()
     print ("SQLite version: %s" % data)                
-except lite.Error:   
+except lite.Error:
     print ("Error")
     exit()
 finally:
@@ -27,16 +29,16 @@ finally:
         con.close()
 
 # create a new DB with the commands
-con = lite.connect(database)
+con = lite.connect(args.db)
 
 with con:
     cur = con.cursor()
 
     # removing old table if it exists
-    cur.execute("drop table if exists "+dbtable)
+    cur.execute("drop table if exists "+args.dbtable)
 
     # create new table
-    db_cmd = "CREATE TABLE "+dbtable+" ("+', '.join(db_fields)+")"
+    db_cmd = "CREATE TABLE "+args.dbtable+" ("+', '.join(db_fields)+")"
     print("Generate new table")
     print(db_cmd)
     cur.execute(db_cmd)
@@ -50,7 +52,7 @@ with con:
             if line[0] != "#" and len(line) > 2:
                 # analyse line by splitting
                 parts = line.rstrip('\n').split(";")
-                db_cmd = "INSERT INTO "+dbtable+" ("+', '.join(db_field_names[:len(parts)])\
+                db_cmd = "INSERT INTO "+args.dbtable+" ("+', '.join(db_field_names[:len(parts)])\
                          +") VALUES ("+', '.join("'" + item + "'" for item in parts)+")" 
                 print (db_cmd)
                 cur.execute(db_cmd)
@@ -58,7 +60,7 @@ with con:
 #con.commit()
             
     # re-read db to check that is worked
-    db_cmd = "SELECT "+', '.join(db_field_names)+" FROM "+dbtable
+    db_cmd = "SELECT "+', '.join(db_field_names)+" FROM "+args.dbtable
     print (db_cmd)
     cur.execute(db_cmd)
     rows = cur.fetchall()

@@ -26,7 +26,8 @@ def command_done(row):
     
 
 parser = argparse.ArgumentParser(description='parallel pipeline') 
-#parser.add_argument('files',      nargs='+',   help='')
+parser.add_argument('-dbtable', type=str, help="SQlite DB file", default=dbtable)
+parser.add_argument('-db',      type=str, help="SQlite DB file", default=database)
 parser.add_argument('-show_cmd',   action="store_true")
 args = parser.parse_args()
 
@@ -43,19 +44,35 @@ requests = []
 # if this is rank 0 then do the organisation
 if comm.rank == 0:
     print("This is rank 0, I read the commands from the database")
+    if not os.path.isfile(args.db):
+        print("")
+        print("cannot find database: ", args.db, " EXIT!!")
+        print("")
+        comm.Abort(1)
     try:
-        con = lite.connect(database)
+        con = lite.connect(args.db)
         cur = con.cursor()    
         cur.execute('SELECT SQLITE_VERSION()')
         data = cur.fetchone()
         print ("SQLite version: %s" % data)                
     except lite.Error:   
-        print ("Error")
-        exit()
+        print("")
+        print("cannot connect to database: ", args.db, " EXIT!!")
+        print("")
+        comm.Abort(1)
     
     with con:
+        # check whether table exists
+        try:
+            cur.execute("SELECT NULL FROM "+args.dbtable+" LIMIT 1")
+        except:
+            print("") 
+            print("DB table ", args.dbtable, " does not exist. EXIT!!")
+            print("")
+            comm.Abort(1)
+
         # read list of tasks from db
-        db_cmd = "SELECT rowid, "+', '.join(db_field_names)+" FROM "+dbtable
+        db_cmd = "SELECT rowid, "+', '.join(db_field_names)+" FROM "+args.dbtable
         print (db_cmd)
         cur.execute(db_cmd)
         rows = cur.fetchall()
@@ -110,7 +127,7 @@ if comm.rank == 0:
             print("info from rank 0: rank ", s.source, " with rowid ", result[0], "took", result[2], " time")
 
             # done with command, update DB
-            db_cmd = "UPDATE "+dbtable+" SET exetime = "+str(int(result[2]))+", cmdexe = 1  WHERE rowid = "+str(result[0])
+            db_cmd = "UPDATE "+args.dbtable+" SET exetime = "+str(int(result[2]))+", cmdexe = 1  WHERE rowid = "+str(result[0])
             cur.execute(db_cmd)
             
             row = rows[exec_idx[cnt]]
@@ -133,7 +150,7 @@ if comm.rank == 0:
             print("info from rank 0: rank ", s.source, " with rowid ", result[0], "took", result[2], " time")
 
             # done with command, update DB
-            db_cmd = "UPDATE "+dbtable+" SET exetime = "+str(int(result[2]))+", cmdexe = 1  WHERE rowid = "+str(result[0])
+            db_cmd = "UPDATE "+args.dbtable+" SET exetime = "+str(int(result[2]))+", cmdexe = 1  WHERE rowid = "+str(result[0])
             cur.execute(db_cmd)
 
             data = ["STOP"]
@@ -144,7 +161,7 @@ if comm.rank == 0:
             busy[s.source] = False
 
 else:
-    print("rank", comm.rank)
+    #print("rank", comm.rank)
     # take care of the possibility that Nmax is small
 
     cmds = comm.recv(source=0, tag=11)
